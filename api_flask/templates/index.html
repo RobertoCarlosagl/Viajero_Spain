@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Turístico - Rutas en Prolog</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-image: url("/static/img/{{ ciudad if ciudad else 'españa' }}.{{ ext if ciudad else 'jpg' }}");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+      color: white;
+      backdrop-filter: brightness(0.85);
+    }
+
+    .glass-box {
+      background-color: rgba(0, 0, 0, 0.75);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    select, input, button {
+      background-color: white !important;
+      color: black !important;
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="mb-4 text-center">🌍 Mapa Turístico - Buscador de Rutas</h1>
+
+    <!-- FORMULARIO -->
+    <form id="rutaForm" method="POST" class="glass-box">
+      <div class="mb-3">
+        <label class="form-label">Origen:</label>
+        <select name="origen" class="form-select" required>
+          <option value="madrid">Madrid</option>
+          <option value="barcelona">Barcelona</option>
+          <option value="valencia">Valencia</option>
+          <option value="sevilla">Sevilla</option>
+          <option value="bilbao">Bilbao</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Destino:</label>
+        <select name="destino" class="form-select" required>
+          <option value="madrid">Madrid</option>
+          <option value="barcelona">Barcelona</option>
+          <option value="valencia">Valencia</option>
+          <option value="sevilla">Sevilla</option>
+          <option value="bilbao">Bilbao</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Tipo de Ruta:</label>
+        <select name="tipo" class="form-select" required>
+          <option value="corta">Ruta más corta</option>
+          <option value="segura">Ruta más segura</option>
+          <option value="sin_peaje">Ruta sin peajes</option>
+          <option value="buen_clima">Ruta con buen clima</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-light w-100">Buscar Ruta</button>
+    </form>
+
+    <!-- CARGANDO -->
+    <div id="loading" class="text-center mt-4" style="display: none;">
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Buscando la mejor ruta...</p>
+    </div>
+
+    <!-- RESULTADO -->
+    {% if resultado %}
+      <div class="glass-box mt-4 alert alert-success text-white">
+        <h5 class="alert-heading">Resultado:</h5>
+        <pre class="mb-0">{{ resultado }}</pre>
+      </div>
+    {% elif request.method == 'POST' %}
+      <div class="glass-box mt-4 alert alert-warning text-dark bg-warning-subtle">
+        <strong>No se encontró una ruta.</strong><br>
+        Intenta con otra combinación de ciudades o tipo de ruta.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- SCRIPT PARA ANIMACIÓN DE CARGA -->
+  <script>
+    const form = document.getElementById('rutaForm');
+    const loading = document.getElementById('loading');
+
+    form.addEventListener('submit', () => {
+      loading.style.display = 'block';
+      form.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
