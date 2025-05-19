@@ -20,7 +20,7 @@ function createWindow() {
 
 function startFlask() {
   flaskProcess = spawn('python', ['api_flask/app.py'], {
-    cwd: path.join(__dirname, '..'),
+    cwd: path.join(__dirname, '..'), // <- raíz del proyecto
     shell: true,
     env: process.env
   });
@@ -40,14 +40,24 @@ function startFlask() {
 
 function waitForFlaskAndLaunch() {
   const tryConnect = () => {
-    http.get('http://localhost:5000', () => {
-      console.log('✅ Flask está listo. Lanzando ventana...');
-      createWindow();
-    }).on('error', () => {
+    const req = http.get('http://localhost:5000', (res) => {
+      if (res.statusCode === 200) {
+        console.log('✅ Flask está listo. Lanzando ventana...');
+        createWindow();
+      } else {
+        console.log(`⏳ Flask respondió pero con estado: ${res.statusCode}`);
+        setTimeout(tryConnect, 1000);
+      }
+    });
+
+    req.on('error', () => {
       console.log('⏳ Esperando a que Flask arranque...');
       setTimeout(tryConnect, 1000);
     });
+
+    req.end(); // ¡IMPORTANTE! Cierra la conexión correctamente
   };
+
   tryConnect();
 }
 

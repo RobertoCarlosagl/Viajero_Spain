@@ -1,82 +1,84 @@
-% ---------------------------------------------
-% Cargar los hechos desde base_conocimiento.pl
-% ---------------------------------------------
+:- use_module(library(lists)).
 :- consult('base_conocimiento.pl').
 
-% ---------------------------------------------
-% Buscar rutas posibles entre dos ciudades
-% ---------------------------------------------
+% ---------------------
+% RUTA MÁS CORTA (DISTANCIA)
+% ---------------------
+ruta_mas_corta(Origen, Destino, Ruta, Distancia) :-
+    setof([R, D], ruta_con_distancia(Origen, Destino, R, D), [[Ruta, Distancia]|_]).
 
-ruta(CiudadA, CiudadB, Ruta, DistanciaTotal) :-
-    ruta_aux(CiudadA, CiudadB, [CiudadA], RutaInvertida, 0, DistanciaTotal),
-    reverse(RutaInvertida, Ruta).
+ruta_con_distancia(Origen, Destino, Ruta, Distancia) :-
+    camino_minimo(Origen, Destino, [Origen], Ruta, Distancia).
 
-ruta_aux(Ciudad, Ciudad, Ruta, Ruta, Dist, Dist).
-ruta_aux(Actual, Destino, Visitadas, RutaFinal, DistAcumulada, DistFinal) :-
-    camino(Actual, Siguiente, Dist, _, _, _, _, _, _),
-    \+ member(Siguiente, Visitadas),
-    NuevaDistancia is DistAcumulada + Dist,
-    ruta_aux(Siguiente, Destino, [Siguiente|Visitadas], RutaFinal, NuevaDistancia, DistFinal).
+camino_minimo(Destino, Destino, Ruta, Ruta, 0).
+camino_minimo(Origen, Destino, Visitados, RutaFinal, DistanciaTotal) :-
+    camino(Origen, Siguiente, Dist, _, _, _),
+    \+ member(Siguiente, Visitados),
+    camino_minimo(Siguiente, Destino, [Siguiente|Visitados], RutaFinal, DistanciaRestante),
+    DistanciaTotal is Dist + DistanciaRestante.
 
-% ---------------------------------------------
-% Ruta más corta
-% ---------------------------------------------
+% ---------------------
+% RUTA SEGURA (CALIDAD MÁXIMA)
+% ---------------------
+ruta_segura(Origen, Destino, Ruta, CalidadTotal) :-
+    setof([R, C], ruta_con_calidad(Origen, Destino, R, C), [[Ruta, CalidadTotal]|_]).
 
-ruta_mas_corta(Inicio, Fin, RutaOptima, DistanciaOptima) :-
-    findall([R,D], ruta(Inicio, Fin, R, D), Rutas),
-    minimo_distancia(Rutas, [RutaOptima, DistanciaOptima]).
+ruta_con_calidad(Origen, Destino, Ruta, Calidad) :-
+    camino_seguro(Origen, Destino, [Origen], Ruta, Calidad).
 
-minimo_distancia([Ruta], Ruta).
-minimo_distancia([[R1,D1],[_,D2]|T], Resultado) :-
-    D1 =< D2,
-    minimo_distancia([[R1,D1]|T], Resultado).
-minimo_distancia([[_,D1],[R2,D2]|T], Resultado) :-
-    D1 > D2,
-    minimo_distancia([[R2,D2]|T], Resultado).
+camino_seguro(Destino, Destino, Ruta, Ruta, 0).
+camino_seguro(Origen, Destino, Visitados, RutaFinal, CalidadTotal) :-
+    camino(Origen, Siguiente, _, _, Cal, _),
+    \+ member(Siguiente, Visitados),
+    camino_seguro(Siguiente, Destino, [Siguiente|Visitados], RutaFinal, CalidadRestante),
+    CalidadTotal is Cal + CalidadRestante.
 
-% ---------------------------------------------
-% Ruta más segura (mejor calidad promedio)
-% ---------------------------------------------
+% ---------------------
+% RUTA SIN PEAJE
+% ---------------------
+ruta_sin_peaje(Origen, Destino, Ruta) :-
+    camino_sin_peaje(Origen, Destino, [Origen], Ruta).
 
-valor_calidad(buena, 3).
-valor_calidad(media, 2).
-valor_calidad(mala, 1).
+camino_sin_peaje(Destino, Destino, Ruta, Ruta).
+camino_sin_peaje(Origen, Destino, Visitados, RutaFinal) :-
+    camino(Origen, Siguiente, _, _, _, 0),
+    \+ member(Siguiente, Visitados),
+    camino_sin_peaje(Siguiente, Destino, [Siguiente|Visitados], RutaFinal).
 
-ruta_segura(Inicio, Fin, RutaOptima, CalidadProm) :-
-    findall([R,C], ruta_con_calidad(Inicio, Fin, R, C), Rutas),
-    maximo_calidad(Rutas, [RutaOptima, CalidadProm]).
+% ---------------------
+% RUTA CON BUEN CLIMA (usamos lista estática de ciudades)
+% ---------------------
+ciudad_clima_ideal(madrid).
+ciudad_clima_ideal(valencia).
+ciudad_clima_ideal(sevilla).
 
-ruta_con_calidad(Inicio, Fin, Ruta, CalidadProm) :-
-    ruta(Inicio, Fin, Ruta, _),
-    calidad_total(Ruta, Total, Count),
-    CalidadProm is Total / Count.
+ruta_buen_clima(Origen, Destino, Ruta) :-
+    camino_clima_bueno(Origen, Destino, [Origen], Ruta).
 
-calidad_total([_], 0, 0).
-calidad_total([A,B|T], Total, Count) :-
-    camino(A, B, _, Calidad, _, _, _, _, _),
-    valor_calidad(Calidad, Valor),
-    calidad_total([B|T], TotalRestante, CRestante),
-    Total is Valor + TotalRestante,
-    Count is 1 + CRestante.
+camino_clima_bueno(Destino, Destino, Ruta, Ruta).
+camino_clima_bueno(Origen, Destino, Visitados, RutaFinal) :-
+    camino(Origen, Siguiente, _, _, _, _),
+    ciudad_clima_ideal(Siguiente),
+    \+ member(Siguiente, Visitados),
+    camino_clima_bueno(Siguiente, Destino, [Siguiente|Visitados], RutaFinal).
 
-maximo_calidad([Ruta], Ruta).
-maximo_calidad([[R1,C1],[_,C2]|T], Resultado) :-
-    C1 >= C2,
-    maximo_calidad([[R1,C1]|T], Resultado).
-maximo_calidad([[_,C1],[R2,C2]|T], Resultado) :-
-    C1 < C2,
-    maximo_calidad([[R2,C2]|T], Resultado).
+% ---------------------
+% RUTA QUE PASE POR LUGAR DE INTERÉS
+% ---------------------
 
-% ---------------------------------------------
-% Ruta que pase por lugar de interés
-% ---------------------------------------------
+ruta_con_interes(Origen, Destino, Ruta, Lugares) :-
+    camino_con_interes(Origen, Destino, [Origen], Ruta),
+    contiene_interes(Ruta, Lugares).
 
-ruta_con_interes(Inicio, Fin, Interes, Ruta) :-
-    ruta(Inicio, Fin, Ruta, _),
-    incluye_interes(Ruta, Interes).
+camino_con_interes(Destino, Destino, Ruta, Ruta).
+camino_con_interes(Origen, Destino, Visitados, RutaFinal) :-
+    camino(Origen, Siguiente, _, _, _, _),
+    \+ member(Siguiente, Visitados),
+    camino_con_interes(Siguiente, Destino, [Siguiente|Visitados], RutaFinal).
 
-incluye_interes([_], _) :- false.
-incluye_interes([A,B|T], Interes) :-
-    camino(A, B, _, _, _, Lista, _, _, _),
-    member(Interes, Lista);
-    incluye_interes([B|T], Interes).
+contiene_interes(Ruta, Lugares) :-
+    findall(Lugar, (
+        member(Ciudad, Ruta),
+        interes(Ciudad, Lugar)
+    ), Lugares),
+    Lugares \= [].
