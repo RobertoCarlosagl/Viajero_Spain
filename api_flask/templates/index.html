@@ -7,7 +7,7 @@
 
   <style>
     body {
-      background-image: url("/static/img/{{ ciudad if ciudad else 'españa' }}.{{ ext if ciudad else 'jpg' }}");
+      background-image: url("{{ url_for('static', filename='img/' + imagen_destino) }}");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -43,32 +43,29 @@
       <div class="mb-3">
         <label class="form-label">Origen:</label>
         <select name="origen" class="form-select" required>
-          <option value="madrid">Madrid</option>
-          <option value="barcelona">Barcelona</option>
-          <option value="valencia">Valencia</option>
-          <option value="sevilla">Sevilla</option>
-          <option value="bilbao">Bilbao</option>
+          {% for ciudad in ciudades %}
+            <option value="{{ ciudad }}">{{ ciudad.title() }}</option>
+          {% endfor %}
         </select>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Destino:</label>
         <select name="destino" class="form-select" required>
-          <option value="madrid">Madrid</option>
-          <option value="barcelona">Barcelona</option>
-          <option value="valencia">Valencia</option>
-          <option value="sevilla">Sevilla</option>
-          <option value="bilbao">Bilbao</option>
+          {% for ciudad in ciudades %}
+            <option value="{{ ciudad }}">{{ ciudad.title() }}</option>
+          {% endfor %}
         </select>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Tipo de Ruta:</label>
-        <select name="tipo" class="form-select" required>
+        <select name="tipo_ruta" class="form-select" required>
           <option value="corta">Ruta más corta</option>
           <option value="segura">Ruta más segura</option>
           <option value="sin_peaje">Ruta sin peajes</option>
           <option value="buen_clima">Ruta con buen clima</option>
+          <option value="interes">Ruta con interés turístico</option>
         </select>
       </div>
 
@@ -85,7 +82,7 @@
 
     <!-- RESULTADO -->
     {% if resultado %}
-      <div class="glass-box mt-4 alert alert-success text-white">
+      <div class="glass-box mt-4 alert alert-success text-white fade-in">
         <h5 class="alert-heading">Resultado:</h5>
         <pre class="mb-0">{{ resultado }}</pre>
       </div>
@@ -104,7 +101,9 @@
 
     form.addEventListener('submit', () => {
       loading.style.display = 'block';
-      form.style.display = 'none';
+      setTimeout(() => {
+        form.style.display = 'none';
+      }, 300);
     });
   </script>
 </body>
